@@ -1,51 +1,99 @@
 package com.blackfrox.videoplayer
 
-import android.support.v7.app.AppCompatActivity
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Environment
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.SurfaceView
+import android.widget.SeekBar
 import kotlinx.android.synthetic.main.activity_main.*
+
 
 class MainActivity : AppCompatActivity() {
 
+
+    private var TAG="MainActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        initTest()
-    }
-    private fun initTest() {
         val path= Environment.getExternalStorageDirectory().absolutePath+"/miku片尾福利.mp4"
-        videoView.setVideoPath(path)
+//        val url = "http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8"
+        val url = "http://9890.vod.myqcloud.com/9890_4e292f9a3dd011e6b4078980237cc3d3.f30.mp4"
+//        player.setVideoPath(path)
+//        player.start()
+        player.setVideoPath(path)
+        initTest()
 
-//        val url = "http://baobab.wdjcdn.com/14564977406580.mp4"
-//        videoView.setVideoPath(url)
+        startButton.setOnClickListener {
+            if (player.isPlaying())
+                player.pause()
+            else player.start()
+        }
+        var seekToPosition=0L
+        seekBar.max= player.getDuration().toInt()
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (!fromUser)
+                    return
 
-        //后期要做缓存之类的
-        controller.setAnchorView(videoView)
-        videoView.setMediaController(controller)
-        videoView.start()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+
+            }
+
+        })
     }
 
-    private var lastPosition=0
+     fun initTest(){
+         val path= Environment.getExternalStorageDirectory().absolutePath+"/miku片尾福利.mp4"
+//         val videoView=findViewById<DVideoView>(R.id.videoView)
+//         videoView.setVideoPath(path)
+//         videoView.start()
+//         startButton.setOnClickListener {
+////             videoView.seekTo(lastPosition)
+//             if (videoView.isPlaying()){
+//                 videoView.pause()
+//             }else{
+//                 videoView.start()
+//             }
+//         }
+//         videoView.setOnVideoControlListener(object : OnVideoControlListener {
+//             override fun onStartPlay() {
+//                 videoView.startPlay()
+//             }
+//
+//             override fun onBack() {
+//
+//             }
+//
+//             override fun onFullScreen() {
+//
+//             }
+//
+//             override fun onRetry(errorStatus: Int) {
+//
+//             }
+//
+//         })
+//         videoView.setPathAndPlay(path,"")
+     }
+
     override fun onPause() {
         super.onPause()
-        videoView.pause()
-        lastPosition=videoView.getCurrentPosition()
+
+        player.onPause()
     }
+
 
     override fun onResume() {
         super.onResume()
 
-//        Log.d("VideoView","${videoView.height}")
-        //我在想resume方法到底有什么用?
-        //恢复进度的办法是用下面三行代码实现的
-        //加if判断是因为resume比onPause方法更早执行，第一次lastPosition是0
-        if (lastPosition>0){
-            videoView.start()
-            videoView.seekTo(lastPosition)
-        }
-//        videoView.resume()
-        //恢复需要两秒时间，也不知道bilibili是怎么做到的，可能是架构不同吧
-        //明明MediaPlayer中恢复和继续都是start方法，为什么这里不行?
+        player.onResume()
     }
 }

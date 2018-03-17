@@ -1,4 +1,4 @@
-package com.blackfrox.videoplayer
+package com.blackfrox.player.util
 
 import android.content.Context
 import android.widget.Toast
