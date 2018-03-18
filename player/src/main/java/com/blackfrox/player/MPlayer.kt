@@ -1,10 +1,13 @@
 package com.blackfrox.player
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.support.v7.app.ActionBar
+import android.support.v7.widget.ContentFrameLayout
 import android.support.v7.widget.Toolbar
 import android.util.AttributeSet
 import com.blackfrox.player.ijkMedia.IjkVideoView
@@ -95,16 +98,15 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             post(mShowProgress)
         }
     }
-    //TODO : 不知道这里获取的竖屏宽高参数是不是对的
-    private var initWidth: Int =0
-    private  var initHeight: Int =0
 
     //是否全屏
     protected var isFullScreen = false
     private var newPosition =0L //滑动之后的当前进度
     protected val mAudioManager by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
+
     init {
+
         if (context is Activity){ }
         else throw Exception("The context must be Activity")
 
@@ -117,38 +119,39 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             postDelayed({show()},300)
         }
 
+
         //解决: seekBar与滑动事件冲突
         seekBar.setOnTouchListener(this)
         rl_video.setOnTouchListener(this)
 
+        img_fullScreen.setOnClickListener {
+            //横屏的时候
+            if (resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE){
+                //变成竖屏
+                context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }else{
+                context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+        }
+    }
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        isFullScreen = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //TODO 画面旋转的时候需要一秒，体验不好
+        if (!isFullScreen){
+            layoutParams.width=initWidth
+            layoutParams.height=initHeight
+        }else{
+            layoutParams.width = LayoutParams.MATCH_PARENT
+            layoutParams.height =LayoutParams.MATCH_PARENT
+        }
+        if(isShowing) show()
+        super.onConfigurationChanged(newConfig)
     }
 
     constructor(context: Context,isFullScreen: Boolean): this(context){
         this@MPlayer.isFullScreen =isFullScreen
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        isFullScreen = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //TODO 画面旋转的时候需要一秒，体验不好
-        if (!isFullScreen){
-            val lp=layoutParams
-            lp.width=initWidth
-            lp.height = initHeight
-            layoutParams=lp
-            if(isShowing) show()
-        }else{
-            initHeight=layoutParams.height
-            initWidth=layoutParams.width
-
-            val lp=layoutParams
-            lp.width = LayoutParams.MATCH_PARENT
-            lp.height =LayoutParams.MATCH_PARENT
-            layoutParams=lp
-
-            if(isShowing) show()
-        }
-        super.onConfigurationChanged(newConfig)
-    }
 
     /**
      * 双击和点击有冲突(已解决，使用onSingleConfirm替代onSingerTap)

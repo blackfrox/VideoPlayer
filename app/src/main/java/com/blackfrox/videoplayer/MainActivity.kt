@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         val path= Environment.getExternalStorageDirectory().absolutePath+"/miku片尾福利.mp4"
         val url = "http://9890.vod.myqcloud.com/9890_4e292f9a3dd011e6b4078980237cc3d3.f30.mp4"
 
-        setSupportActionBar(toolBar)
+//        setSupportActionBar(toolBar)
 //        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         //        player.toolBar =toolBar
 

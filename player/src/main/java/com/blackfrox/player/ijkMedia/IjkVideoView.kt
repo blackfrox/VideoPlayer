@@ -151,6 +151,9 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         }
     }
 
+    //布局中设置的宽高
+    protected var initWidth: Int =0
+    protected  var initHeight: Int =0
    open protected fun setRenderView(renderView: IRenderView) {
 
 //        if (mRenderView!=null){
@@ -183,8 +186,10 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         mRenderView.addRenderCallback(object :IRenderView.IRenderCallback{
 
             override fun onSurfaceChanged(holder: IRenderView.ISurfaceHolder, format: Int, width: Int, height: Int) {
+
                 if (holder.renderView!=mRenderView)
                     return
+
 
                 mSurfaceWidth=width
                 mSurfaceHeight=height
@@ -199,7 +204,10 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                 }
             }
             override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
-
+                initWidth=this@IjkVideoView.width
+                initHeight=this@IjkVideoView.height
+//                Log.d(TAG,"Width: ${this@IjkVideoView.width}")
+//                Log.d(TAG,"Height:  ${this@IjkVideoView.width}")
                 if(holder.renderView!=mRenderView)
                     return
 
