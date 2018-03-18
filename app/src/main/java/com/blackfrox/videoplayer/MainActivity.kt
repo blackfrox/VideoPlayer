@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import tv.danmaku.ijk.media.player.IMediaPlayer
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,13 +22,13 @@ class MainActivity : AppCompatActivity() {
         //        player.toolBar =toolBar
 
         player.setVideoPath(path)
+
         startButton.setOnClickListener {
             if (player.isPlaying())
                 player.pause()
             else player.start()
         }
 
-        seekBar.setOnSeekBarChangeListener(player.mSeekListener)
     }
 
     override fun onPause() {

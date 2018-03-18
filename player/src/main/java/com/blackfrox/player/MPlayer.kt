@@ -168,7 +168,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
      * 亮度，进度音频
      */
     protected val gestureDetector=GestureDetector(context,object :GestureDetector.SimpleOnGestureListener() {
-        //使用这个解决点击双击冲突 //怪不得之前还是有问题，原来是douleClick里我的代码有问题
+        //使用这个解决点击双击冲突 //怪不得之前还是有问题，原来是双击方法里我的代码有问题
         override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
             if (mFingerBehavior<0)
                 toggleMediaControlsVisiblity()

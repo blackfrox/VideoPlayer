@@ -119,12 +119,11 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                     seekTo(mSeekWhenPrepared)
                 //Todo: 这里实现了自动播放，以后需要优化的时候可以在这里更改
                 start()
-                show()
             }
         }
         //将surfaceView和mediaPlayer绑定
         override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
-            Log.d(TAG,"suraceCreated")
+//            Log.d(TAG,"suraceCreated")
 
             if(holder.renderView!=mRenderView)
                 return
