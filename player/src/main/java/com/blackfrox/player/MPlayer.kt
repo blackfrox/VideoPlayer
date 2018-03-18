@@ -24,12 +24,12 @@ import java.util.*
  * 1 竖屏显示 和横屏显示
  */
 class MPlayer @JvmOverloads constructor(context: Context, attributeSet: AttributeSet?=null, def: Int=0)
-    : IjkVideoView(context,attributeSet,def) {
+    : IjkVideoView(context,attributeSet,def), View.OnTouchListener {
 
     private var TAG="MPlayer"
     protected val imageView by lazy { ImageView(context) }
 
-    var sDefaultTimeout=3000L
+//    var sDefaultTimeout=3000L
 
     var actionBar: ActionBar ?=null
     set(value) {
@@ -75,8 +75,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 //            the progress bar's position.
                 return
 
-//            val newPosition = (getDuration() * progress / 1000L)
-//            seekTo(newPosition)
+            val newPosition = (getDuration() * progress / 1000L)
             tv_current.text = stringForTime(newPosition)
         }
 
@@ -110,17 +109,20 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 
         img_pause.setOnClickListener {
             doPauseResume()
-            //不知道为什么图标会失灵，所以将下面的方法延迟了
+            //解决: 不知道为什么图标会失灵，所以将下面的方法延迟了
             postDelayed({show()},300)
         }
-        //TODO: seekBar不能拖动问题
-        //答: seekBar和滑动事件冲突了，解决办法是取消seekBar的滑动监听
-//        seekBar.isEnabled=true
-//        seekBar.isClickable=true
-//        seekBar.max=1000
-//        seekBar.setOnSeekBarChangeListener(mSeekListener)
+
+        //解决: seekBar与滑动事件冲突
+        seekBar.setOnTouchListener(this)
+        rl_video.setOnTouchListener(this)
+
     }
 
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        show()
+    }
     constructor(context: Context,isFullScreen: Boolean): this(context){
         this@MPlayer.isFullScreen =isFullScreen
     }
@@ -158,7 +160,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     /**
      * 亮度，进度音频
      */
-    protected val gestureDetector=GestureDetector(context,object :GestureDetector.SimpleOnGestureListener(){
+    protected val gestureDetector=GestureDetector(context,object :GestureDetector.SimpleOnGestureListener() {
         //使用这个解决点击双击冲突 //怪不得之前还是有问题，原来是douleClick里我的代码有问题
         override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
             if (mFingerBehavior<0)
@@ -209,7 +211,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
                     newPosition=(getCurrentPosition()+scrollTime).toLong()
 //                    Log.d(TAG,"onScroll: $moveX")
 //                    Log.d(TAG,"onScroll : width: $width")
-                    val progress=newPosition*100/(if (getDuration()==0L) 1 else getDuration())
+                    val progress=newPosition*1000/(if (getDuration()==0L) 1 else getDuration())
                     seekBar.progress= progress.toInt()
                     showProgressDialog(distanceX,newPosition)
                 }
@@ -249,53 +251,40 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         }
 
     })
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        gestureDetector.onTouchEvent(event)
-        when(event.action){
-            MotionEvent.ACTION_UP ->{
-                dismissProgressDialog()
-                dismissVolumeDialog()
-                dismissBrightnessDialog()
 
-                //因为音量和亮度都是实时调节的，而进度是只有在手指抬起的时候才设置
-                when(mFingerBehavior){
-                    FINGER_BEHAVIOR_PROGRESS ->{
+    //为什么return false 才是拦截事件，而不是return true
+    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        when(v?.id){
+            R.id.seekBar ->{
+                //竖屏不拦截滑动事件，横屏拦截
+                if (!isFullScreen)
+                    return true
+                //为什么别人的代码，我抄写就有问题，不起作用???
+                //最后还是得自己写
+                seekBar.setOnSeekBarChangeListener(mSeekListener)
+                return false
+            }
+            //滑动事件
+            R.id.rl_video ->{
+                gestureDetector.onTouchEvent(event)
+                when(event?.action){
+                    MotionEvent.ACTION_UP ->{
+                        dismissProgressDialog()
+                        dismissVolumeDialog()
+                        dismissBrightnessDialog()
+
+                        //因为音量和亮度都是实时调节的，而进度是只有在手指抬起的时候才设置
+                        when(mFingerBehavior){
+                            FINGER_BEHAVIOR_PROGRESS ->{
 //                        Log.d(TAG,"up:::${getCurrentPosition()}")
-                        seekTo(newPosition)
+                                seekTo(newPosition)
+                            }
+                        }
                     }
                 }
+                return true
             }
         }
-
-//        val x=event.x
-//        val y= event.y
-//        when(event.action){
-//            MotionEvent.ACTION_DOWN -> touchDown(x,y) //将变量初始化
-//            MotionEvent.ACTION_MOVE ->{
-//                val deltaX = x - mDownX
-//                val deltaY = y - mDownY
-//                val absDeltaX=Math.abs(deltaX)
-//                val absDeltaY=Math.abs(deltaY)
-//
-//                if (!mChangePosition&&!mChangeVolume&&!mBrightness)
-//                    touchMoveFullLogic(absDeltaX,absDeltaY,y,deltaX,deltaY) //将原本的touchMove方法放进这个方法里了
-//            }
-//            MotionEvent.ACTION_UP ->{
-//                touchUp()
-//
-//                //不要和隐藏虚拟按键后，滑出虚拟按键冲突
-//                if(isHideKey&&mShowVKey)
-//                   return true
-//            }
-//        }
-        /////下面是之前写的控制层的显示和隐藏,已经写到touchUp里了
-//        when(event.action){
-//            MotionEvent.ACTION_DOWN -> show(0) // show until hide is called
-//            MotionEvent.ACTION_UP -> {
-//                show() // start timeout
-//            }
-//            MotionEvent.ACTION_CANCEL -> hide()
-//        }
         return true
     }
 
@@ -307,11 +296,9 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         }
     }
 
-    override fun show()=
-        show(sDefaultTimeout)
-
-    //TODO： 视频刚开始播放的时候， 播放图标显示不正确
-     fun show(timeout: Long){
+    //TODO：视频刚开始播放的时候， 播放图标显示不正确
+    //timeout的默认值：sDefaultTime写在ijkVideoView里了
+    override fun show(timeout: Long) {
         if (!isShowing){
             setProgress()
 
@@ -395,7 +382,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             val pos=1000L * getCurrentPosition() /getDuration()
             seekBar.progress= pos.toInt()
         }
-        seekBar.secondaryProgress=getBufferPercentage()*10
+        seekBar.secondaryProgress=getBufferPercentage()
 
         tv_current.text=stringForTime(getCurrentPosition())
         tv_total.text=stringForTime(getDuration())

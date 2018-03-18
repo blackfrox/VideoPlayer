@@ -104,6 +104,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
     private val mSHCallback=object :IRenderView.IRenderCallback{
 
         override fun onSurfaceChanged(holder: IRenderView.ISurfaceHolder, format: Int, width: Int, height: Int) {
+          Log.d(TAG,"suraceChanged")
             if (holder.renderView!=mRenderView)
                 return
 
@@ -119,6 +120,8 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
             }
         }
         override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
+            Log.d(TAG,"suraceCreated")
+
             if(holder.renderView!=mRenderView)
                 return
 
@@ -132,6 +135,8 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         }
 
         override fun onSurfaceDestroyed(holder: IRenderView.ISurfaceHolder) {
+            Log.d(TAG,"suraceDestoryed")
+
             if (holder.renderView!=mRenderView)
                 return
 
@@ -188,6 +193,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                 }
             }
             override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
+
                 if(holder.renderView!=mRenderView)
                     return
 
@@ -216,7 +222,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
      *
      */
     open fun setVideoPath(path: String){
-        Log.d(TAG,"path : $path")
+//        Log.d(TAG,"path : $path")
         setVideoURI(Uri.parse(path))
     }
 
@@ -287,10 +293,10 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                     val datasource=FileMediaDataSource(File(mUri.toString()))
                     setDataSource(datasource)
                 }else if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.ICE_CREAM_SANDWICH&&mHeaders!=null){
-                    Log.d(TAG,"URI    $mUri")
+//                    Log.d(TAG,"URI    $mUri")
                     setDataSource(mAppContext,mUri,mHeaders)
                 }else{
-                    Log.d(TAG,"URI     $mUri")
+//                    Log.d(TAG,"URI     $mUri")
                     setDataSource(mUri.toString())
                 }
                 bindSurfaceHolder(mMediaPlayer!!, mSurfaceHolder!!)
@@ -360,7 +366,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                         start()
                     }else if (!isPlaying()&&
                             (seekToPosition!=0L||getCurrentPosition()>0)){
-                        show()
+                       show()
                     }
                 }
             }
@@ -560,9 +566,10 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         }
         return mediaPlayer
     }
+    var sDefaultTimeout=3000L
 
     /**               需要继承的方法           **/
-    open fun  show(){}
+    open fun  show(timeout: Long=sDefaultTimeout){}
 
     open fun hide(){ }
 

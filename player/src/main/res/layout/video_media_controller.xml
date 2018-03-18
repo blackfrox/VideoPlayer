@@ -70,6 +70,7 @@
             android:id="@+id/seekBar"
             android:layout_width="0dp"
             android:layout_weight="1"
+            android:max="1000"
             android:layout_height="wrap_content"/>
 
         <TextView
