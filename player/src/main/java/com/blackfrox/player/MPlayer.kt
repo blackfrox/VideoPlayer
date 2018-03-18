@@ -104,11 +104,12 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     private var newPosition =0L //滑动之后的当前进度
     protected val mAudioManager by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
-
+    protected var activity: Activity
     init {
 
-        if (context is Activity){ }
-        else throw Exception("The context must be Activity")
+        if (context is Activity){
+           activity=context
+        } else throw Exception("The context must be Activity")
 
         LayoutInflater.from(context)
                 .inflate(R.layout.video_media_controller,this)
@@ -129,6 +130,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             if (resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE){
                 //变成竖屏
                 context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_USER
             }else{
                 context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             }
@@ -140,9 +142,11 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         if (!isFullScreen){
             layoutParams.width=initWidth
             layoutParams.height=initHeight
+            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }else{
             layoutParams.width = LayoutParams.MATCH_PARENT
             layoutParams.height =LayoutParams.MATCH_PARENT
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
         if(isShowing) show()
         super.onConfigurationChanged(newConfig)
