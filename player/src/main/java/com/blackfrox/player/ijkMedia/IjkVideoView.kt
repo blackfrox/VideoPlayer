@@ -190,7 +190,6 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                 if (holder.renderView!=mRenderView)
                     return
 
-
                 mSurfaceWidth=width
                 mSurfaceHeight=height
                 val isValidState= (mTargetState== STATE_PLAYING)
@@ -206,8 +205,8 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
             override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
                 initWidth=this@IjkVideoView.width
                 initHeight=this@IjkVideoView.height
-//                Log.d(TAG,"Width: ${this@IjkVideoView.width}")
-//                Log.d(TAG,"Height:  ${this@IjkVideoView.width}")
+                show()
+
                 if(holder.renderView!=mRenderView)
                     return
 
