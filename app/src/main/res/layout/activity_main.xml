@@ -10,10 +10,20 @@
 
 
 
-    <com.blackfrox.player.MPlayer
-        android:id="@+id/player"
-        android:layout_width="match_parent"
-        android:layout_height="240dp"/>
+   <FrameLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content">
+
+       <com.blackfrox.player.MPlayer
+           android:id="@+id/player"
+           android:layout_width="match_parent"
+           android:layout_height="240dp"/>
+       <android.support.v7.widget.Toolbar
+           android:id="@+id/toolBar"
+           android:layout_width="match_parent"
+           android:layout_height="?actionBarSize"
+           android:background="@color/colorPrimary"/>
+   </FrameLayout>
 
     <Button
         android:id="@+id/startButton"

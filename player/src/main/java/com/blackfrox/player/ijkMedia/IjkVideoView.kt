@@ -101,8 +101,10 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
 
     }
 
+    //不知道为什么这个变量用不了，所以在rendView中用lamabda又写了一个就正常了
     private val mSHCallback=object :IRenderView.IRenderCallback{
 
+        //调用mediaPlayer的方法
         override fun onSurfaceChanged(holder: IRenderView.ISurfaceHolder, format: Int, width: Int, height: Int) {
           Log.d(TAG,"suraceChanged")
             if (holder.renderView!=mRenderView)
@@ -115,10 +117,12 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
             if (mMediaPlayer!=null&&isValidState&&hasValidSize){
                 if (mSeekWhenPrepared!=0L)
                     seekTo(mSeekWhenPrepared)
-
+                //Todo: 这里实现了自动播放，以后需要优化的时候可以在这里更改
                 start()
+                show()
             }
         }
+        //将surfaceView和mediaPlayer绑定
         override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
             Log.d(TAG,"suraceCreated")
 
@@ -134,6 +138,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
             }
         }
 
+        //mediaPlayer解绑
         override fun onSurfaceDestroyed(holder: IRenderView.ISurfaceHolder) {
             Log.d(TAG,"suraceDestoryed")
 
@@ -189,6 +194,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                     if (mSeekWhenPrepared!=0L)
                         seekTo(mSeekWhenPrepared)
 
+                    //todo 实现了自动播放
                     start()
                 }
             }
@@ -222,7 +228,6 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
      *
      */
     open fun setVideoPath(path: String){
-//        Log.d(TAG,"path : $path")
         setVideoURI(Uri.parse(path))
     }
 
@@ -345,6 +350,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
 //        mHudViewHolder.updateLoadCost(mPrepareEndTime-mPrepareStartTime)
         mCurrentState= STATE_PREPARED
 
+        mOnPreparedListener?.onPrepared(it)
         mOnPreparedListener?.onPrepared(it)
         mVideoWidth=it.videoWidth
         mVideoHeight=it.videoHeight

@@ -5,15 +5,14 @@ import android.content.Context
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.support.v7.app.ActionBar
+import android.support.v7.widget.Toolbar
 import android.util.AttributeSet
 import com.blackfrox.player.ijkMedia.IjkVideoView
 import android.widget.ImageView
 import android.util.Log
 import android.view.*
 import android.widget.SeekBar
-import com.blackfrox.player.util.CommonUtil
 import kotlinx.android.synthetic.main.video_media_controller.view.*
-import kotlinx.android.synthetic.main.video_overlay_progress.view.*
 import java.util.*
 
 
@@ -31,16 +30,19 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 
 //    var sDefaultTimeout=3000L
 
-    var actionBar: ActionBar ?=null
+                         /*可供外部调用的变量值*/
+    //actionBar必须是toolBar，并且player必须在toolBarLayout里布局
+    //不然会很难看，还不如不用
+    var toolBar: Toolbar ?=null
     set(value) {
         field=value
         if (isShowing)
-            field?.show()
-        else field?.hide()
+            field?.visibility= View.VISIBLE
+        else field?.visibility= View.GONE
     }
-    //是否全屏
-   protected var isFullScreen = false
     var isShowing = false
+                         /*可供外部调用的变量值*/
+
 
     //拖动ing
     private var mDragging = false
@@ -55,7 +57,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 //    The second scenario involves the user operatring the scroll ball, in this
 //    case there WON'T BE onStartTrackingTouch/onStopTrackingTouch notifications,
 //    we will simply apply the updated position without suspending regular updates.
-    private val mSeekListener = object : SeekBar.OnSeekBarChangeListener {
+     val mSeekListener = object : SeekBar.OnSeekBarChangeListener {
         override fun onStartTrackingTouch(seekBar: SeekBar?) {
             show(3600000)
 
@@ -97,7 +99,9 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     private var initWidth: Int =0
     private  var initHeight: Int =0
 
-    private  var newPosition =0L //滑动之后的当前进度
+    //是否全屏
+    protected var isFullScreen = false
+    private var newPosition =0L //滑动之后的当前进度
     protected val mAudioManager by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
     init {
@@ -119,10 +123,6 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 
     }
 
-    override fun onFinishInflate() {
-        super.onFinishInflate()
-        show()
-    }
     constructor(context: Context,isFullScreen: Boolean): this(context){
         this@MPlayer.isFullScreen =isFullScreen
     }
@@ -303,15 +303,15 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             setProgress()
 
             //根据横竖屏，显示不同的ui
-            // 1 竖屏     显示 actionBar 和 下controller
+            // 1 竖屏     显示 toolBar 和 下controller
             // 2 横屏     显示 上controller 和 下controller
             //TODO 横竖屏状态下  控制Ui需要写两个 因为横屏状态的操作功能会增多
             ll_bottom.visibility= View.VISIBLE
             if (!isFullScreen){
-                actionBar?.show()
+                toolBar?.visibility= View.VISIBLE
                 ll_top.visibility=GONE
             }else{
-                actionBar?.hide()
+                toolBar?.visibility= View.GONE
                 ll_top.visibility= View.VISIBLE
             }
 
@@ -338,13 +338,13 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
                 ll_top.visibility= View.GONE
                 ll_bottom.visibility= View.GONE
 
-                if(isPlaying()) actionBar?.hide()
+                //只有在竖屏并且正在播放时隐藏actionBar，否则没有必要
+                if(isPlaying()&&!isFullScreen) toolBar?.visibility= View.GONE
             }catch (e: IllegalArgumentException){
                 Log.d(TAG,"alread removed")
             }
             isShowing=false
         }
-        actionBar?.hide()
     }
 
     private val mFadeOut= Runnable {
