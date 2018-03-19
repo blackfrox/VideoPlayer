@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:id="@+id/rl_video"
                 android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/ll_top"
+        android:id="@+id/control_top"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="@android:color/transparent"
+        android:background="@android:color/black"
         android:gravity="center_vertical"
-        android:paddingLeft="10dp"
-        android:visibility="gone">
+        android:paddingLeft="10dp">
 
         <ImageView
             android:id="@+id/img_back"
@@ -23,6 +21,7 @@
             android:layout_height="wrap_content"/>
         <TextView
             android:id="@+id/tv_title"
+            android:textColor="@color/white"
             android:paddingLeft="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -32,61 +31,113 @@
     </LinearLayout>
 
     <!--<include layout="@layout/layout_progress"/>-->
-    <LinearLayout
-        android:id="@+id/ll_bottom"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_alignParentBottom="true"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:background="@android:color/holo_blue_light"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp">
+   <LinearLayout
+       android:id="@+id/control_bottom"
+       android:orientation="vertical"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:background="@android:color/black"
+       android:layout_alignParentBottom="true"
+       android:paddingLeft="16dp"
+       android:paddingRight="16dp">
+       <SeekBar
+           android:id="@+id/seekBar"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:max="1000"/>
 
-        <ImageView
-            android:id="@+id/img_pause"
-            android:src="@drawable/bili_player_play_can_pause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+       <RelativeLayout
+           android:layout_width="match_parent"
+           android:layout_height="40dp"
+           android:layout_marginBottom="6dp">
 
-        <TextView
-            android:id="@+id/tv_current"
-            android:textSize="14sp"
-            android:textColor="@android:color/white"
-            android:paddingLeft="16dp"
-            android:text="00:00"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+           <ImageView
+               android:id="@+id/img_play"
+               android:layout_centerVertical="true"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:src="@drawable/bili_player_play_can_pause"/>
 
-        <TextView
-            android:visibility="gone"
-            android:textSize="14sp"
-            android:textColor="@android:color/white"
-            android:text="/"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+           <TextView
+               android:id="@+id/tv_current"
+               android:textSize="14sp"
+               android:textColor="@android:color/white"
+               android:layout_marginLeft="16dp"
+               android:layout_toRightOf="@+id/img_play"
+               android:layout_alignBaseline="@id/img_play"
+               android:layout_centerVertical="true"
 
-        <SeekBar
-            android:id="@+id/seekBar"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:max="1000"
-            android:layout_height="wrap_content"/>
+               android:text="00:00"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"/>
 
-        <TextView
-            android:id="@+id/tv_total"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"/>
+           <TextView
+               android:id="@+id/textView"
+               android:textSize="14sp"
+               android:textColor="@android:color/white"
+               android:text="/"
+               android:layout_toRightOf="@id/tv_current"
+               android:layout_centerVertical="true"
 
-        <ImageView
-            android:layout_marginLeft="5dp"
-            android:id="@+id/img_fullScreen"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/player_fullscreen"/>
-    </LinearLayout>
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"/>
+
+
+           <TextView
+               android:id="@+id/tv_total"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_toEndOf="@+id/textView"
+               android:layout_toRightOf="@+id/textView"
+               android:layout_centerVertical="true"
+               android:text="00:00"
+               android:textColor="@android:color/white"
+               android:textSize="14sp"/>
+
+           <TextView
+               android:id="@+id/tv_lock"
+               android:gravity="center"
+               android:text="锁屏"
+               android:textSize="12sp"
+               android:textColor="@android:color/white"
+               android:drawableTop="@mipmap/ic_player_locked_2"
+               android:drawablePadding="6dp"
+               android:layout_alignParentRight="true"
+               android:layout_centerVertical="true"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"/>
+
+           <TextView
+               android:id="@+id/tv_quality"
+               android:gravity="center"
+               android:text="高清"
+               android:textSize="12sp"
+               android:textColor="@android:color/white"
+               android:drawableTop="@mipmap/ic_player_media_quality_high"
+               android:drawablePadding="6dp"
+               android:layout_toLeftOf="@id/tv_lock"
+               android:layout_marginRight="64dp"
+               android:layout_alignParentRight="true"
+               android:layout_centerVertical="true"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"/>
+
+           <TextView
+               android:id="@+id/tv_danmu"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_alignParentTop="true"
+               android:layout_marginEnd="45dp"
+               android:layout_marginRight="45dp"
+               android:layout_toLeftOf="@+id/tv_quality"
+               android:layout_toStartOf="@+id/tv_quality"
+               android:drawablePadding="6dp"
+               android:drawableTop="@mipmap/bili_player_danmaku_is_closed"
+               android:gravity="center"
+               android:text="弹幕关"
+               android:textColor="@android:color/white"
+               android:textSize="12sp"/>
+       </RelativeLayout>
+   </LinearLayout>
 
 </RelativeLayout>

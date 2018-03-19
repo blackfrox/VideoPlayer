@@ -8,7 +8,7 @@
     tools:context="com.blackfrox.videoplayer.MainActivity"
     android:id="@+id/rootView">
 
-    <com.blackfrox.player.MPlayer
+    <com.blackfrox.player.CustomPlayer
         android:id="@+id/player"
         android:layout_width="match_parent"
         android:layout_height="240dp"/>
@@ -18,9 +18,4 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-    <SeekBar
-        android:id="@+id/seekBar"
-        android:max="100"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
 </LinearLayout>

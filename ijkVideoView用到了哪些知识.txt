@@ -1,0 +1,2 @@
+1 适配器模式(将mediaPlayer和renderView封装成统一的接口)
+2 ConcurrentHashMap并发集合 + 弱引用

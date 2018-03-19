@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
         //        player.toolBar =toolBar
 
         player.setVideoPath(path)
-
+//        player.isLock=true
         startButton.setOnClickListener {
             if (player.isPlaying())
                 player.pause()

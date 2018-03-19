@@ -204,7 +204,6 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
             override fun onSurfaceCreated(holder: IRenderView.ISurfaceHolder, width: Int, height: Int) {
                 initWidth=this@IjkVideoView.width
                 initHeight=this@IjkVideoView.height
-                show()
 
                 if(holder.renderView!=mRenderView)
                     return
@@ -376,6 +375,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                     //start the video here instead of the callback.
                     if (mTargetState== STATE_PLAYING){
                         start()
+                        show()
                     }else if (!isPlaying()&&
                             (seekToPosition!=0L||getCurrentPosition()>0)){
                        show()
@@ -557,9 +557,21 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
     /**
      * Render
      */
-
+    var enableTextureView = false
     private fun initRenders() {
-        val renderView=SurfaceRenderView(context)
+        var renderView: IRenderView
+       if (enableTextureView){
+            renderView = TextureRenderView(getContext())
+           if (mMediaPlayer != null) {
+               renderView.getSurfaceHolder().bindToMediaPlayer(mMediaPlayer)
+               renderView.setVideoSize(mMediaPlayer!!.getVideoWidth(), mMediaPlayer!!.getVideoHeight())
+               renderView.setVideoSampleAspectRatio(mMediaPlayer!!.getVideoSarNum(), mMediaPlayer!!.getVideoSarDen())
+//               renderView.setAspectRatio(mCurrentAspectRatio)
+           }
+       }else{
+            renderView=SurfaceRenderView(context)
+       }
+
         setRenderView(renderView)
     }
 

@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/rl_video"
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-   <com.blackfrox.player.ijkMedia.IjkVideoView
-       android:id="@+id/videoView"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent"/>
+   <include layout="@layout/video_media_controller"
+       android:visibility="gone"/>
+    <include layout="@layout/video_media_controller_portrait"
+        android:id="@+id/control_bottom_portrait"
+             android:background="@drawable/bg_bottom_shadow"/>
 
-   <include layout="@layout/video_media_controller"/>
+    <include layout="@layout/video_overlay_progress"
+             android:layout_width="100dp"
+             android:layout_height="60dp"
+             android:layout_centerInParent="true"
+        android:visibility="gone"/>
 </RelativeLayout>

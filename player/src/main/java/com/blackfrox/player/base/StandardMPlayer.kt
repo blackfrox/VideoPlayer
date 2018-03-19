@@ -1,21 +1,20 @@
-package com.blackfrox.player
+package com.blackfrox.player.base
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
-import android.support.v7.app.ActionBar
-import android.support.v7.widget.ContentFrameLayout
-import android.support.v7.widget.Toolbar
+import android.support.annotation.LayoutRes
 import android.util.AttributeSet
 import com.blackfrox.player.ijkMedia.IjkVideoView
 import android.widget.ImageView
 import android.util.Log
 import android.view.*
 import android.widget.SeekBar
-import kotlinx.android.synthetic.main.video_media_controller.view.*
+import android.widget.TextView
+import com.blackfrox.player.R
+import com.blackfrox.player.ijkMedia.TextureRenderView
 import java.util.*
 
 
@@ -24,28 +23,23 @@ import java.util.*
  * 手势处理， 控制层的显示和隐藏
  *
  * 1 竖屏显示 和横屏显示
+ *
+ * TODO: 需要添加: 1 网络状态监听，2 缓冲时的loadingDialog
  */
-class MPlayer @JvmOverloads constructor(context: Context, attributeSet: AttributeSet?=null, def: Int=0)
+abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attributeSet: AttributeSet?=null, def: Int=0)
     : IjkVideoView(context,attributeSet,def), View.OnTouchListener {
-
-    private var TAG="MPlayer"
-    protected val imageView by lazy { ImageView(context) }
-
-//    var sDefaultTimeout=3000L
+    private var TAG="StandardMPlayer"
 
                          /*可供外部调用的变量值*/
-    //actionBar必须是toolBar，并且player必须在toolBarLayout里布局
-    //不然会很难看，还不如不用
-    var toolBar: Toolbar ?=null
-    set(value) {
-        field=value
-        if (isShowing)
-            field?.visibility= View.VISIBLE
-        else field?.visibility= View.GONE
-    }
+    //    var sDefaultTimeout=3000L
     var isShowing = false
+    var title: String?=null
+    set(value) {
+        mTitleTv?.text=value
+    }
+    //是否锁屏
+    var isLock = false
                          /*可供外部调用的变量值*/
-
 
     //拖动ing
     private var mDragging = false
@@ -60,7 +54,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 //    The second scenario involves the user operatring the scroll ball, in this
 //    case there WON'T BE onStartTrackingTouch/onStopTrackingTouch notifications,
 //    we will simply apply the updated position without suspending regular updates.
-     val mSeekListener = object : SeekBar.OnSeekBarChangeListener {
+    protected val mSeekListener = object : SeekBar.OnSeekBarChangeListener {
         override fun onStartTrackingTouch(seekBar: SeekBar?) {
             show(3600000)
 
@@ -81,7 +75,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
                 return
 
             val newPosition = (getDuration() * progress / 1000L)
-            tv_current.text = stringForTime(newPosition)
+            mCurrentTimeTv?.text = stringForTime(newPosition)
         }
 
         override fun onStopTrackingTouch(seekBar: SeekBar) {
@@ -104,41 +98,78 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     private var newPosition =0L //滑动之后的当前进度
     protected val mAudioManager by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
+    protected var mPlayButton: ImageView?=null
+    protected var mProgress: SeekBar?=null
+    protected var mCurrentTimeTv: TextView?=null
+    protected var mTotalTimeTv: TextView?=null
+    protected var mFullscreenImg: ImageView?=null
+    protected var mVideoLayout: ViewGroup?=null
+    protected var mControlBottom:ViewGroup?=null
+    protected var mControlTop: ViewGroup?=null
+    protected var mBackButton: ImageView?=null
+    protected var mTitleTv: TextView?=null
     protected var activity: Activity
     init {
 
         if (context is Activity){
            activity=context
         } else throw Exception("The context must be Activity")
-
         LayoutInflater.from(context)
-                .inflate(R.layout.video_media_controller,this)
+                .inflate(  getLayoutId(),this)
 
-        img_pause.setOnClickListener {
+
+        initView(context)
+    }
+
+    @LayoutRes abstract fun  getLayoutId():Int
+
+    protected open fun initView(context: Activity) {
+        mPlayButton=findViewById(R.id.img_play)
+        mCurrentTimeTv=findViewById(R.id.tv_current)
+        mTotalTimeTv=findViewById(R.id.tv_total)
+        mProgress=findViewById(R.id.seekBar)
+        mFullscreenImg=findViewById(R.id.img_fullScreen)
+        mVideoLayout=findViewById(R.id.rl_video)
+        mControlTop=findViewById(R.id.control_top)
+        mControlBottom=findViewById(R.id.control_bottom)
+        mBackButton=findViewById(R.id.img_back)
+        mTitleTv=findViewById(R.id.tv_title)
+
+        mPlayButton?.setOnClickListener {
             doPauseResume()
-            //解决: 不知道为什么图标会失灵，所以将下面的方法延迟了
             postDelayed({show()},300)
         }
 
-
         //解决: seekBar与滑动事件冲突
-        seekBar.setOnTouchListener(this)
-        rl_video.setOnTouchListener(this)
+        mProgress?.setOnTouchListener(this)
+        mVideoLayout?.setOnTouchListener(this)
 
-        img_fullScreen.setOnClickListener {
+        mFullscreenImg?.setOnClickListener {
             //横屏的时候
-            if (resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 //变成竖屏
-                context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_USER
+                context.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                context.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+            } else {
+                context.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+            show()
+        }
+
+        mBackButton?.setOnClickListener {
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                //变成竖屏
+                context.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                context.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+                show()
             }else{
-                context.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                activity.onBackPressed()
             }
         }
     }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         isFullScreen = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //TODO 画面旋转的时候需要一秒，体验不好
         if (!isFullScreen){
             layoutParams.width=initWidth
             layoutParams.height=initHeight
@@ -153,7 +184,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     }
 
     constructor(context: Context,isFullScreen: Boolean): this(context){
-        this@MPlayer.isFullScreen =isFullScreen
+        this@StandardMPlayer.isFullScreen =isFullScreen
     }
 
 
@@ -171,7 +202,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         //使用这个解决点击双击冲突 //怪不得之前还是有问题，原来是双击方法里我的代码有问题
         override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
             if (mFingerBehavior<0)
-                toggleMediaControlsVisiblity()
+                toggleMediaControlsVisibility()
             return super.onSingleTapConfirmed(e)
         }
 
@@ -219,7 +250,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 //                    Log.d(TAG,"onScroll: $moveX")
 //                    Log.d(TAG,"onScroll : width: $width")
                     val progress=newPosition*1000/(if (getDuration()==0L) 1 else getDuration())
-                    seekBar.progress= progress.toInt()
+                    mProgress?.progress= progress.toInt()
                     showProgressDialog(distanceX,newPosition)
                 }
                 FINGER_BEHAVIOR_VOLUME ->{//音量变化
@@ -261,6 +292,9 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
 
     //为什么return false 才是拦截事件，而不是return true
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        if (isLock)
+            return false
+
         when(v?.id){
             R.id.seekBar ->{
                 //竖屏不拦截滑动事件，横屏拦截
@@ -268,7 +302,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
                     return true
                 //为什么别人的代码，我抄写就有问题，不起作用???
                 //最后还是得自己写
-                seekBar.setOnSeekBarChangeListener(mSeekListener)
+                mProgress?.setOnSeekBarChangeListener(mSeekListener)
                 return false
             }
             //滑动事件
@@ -295,7 +329,7 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         return true
     }
 
-    private fun toggleMediaControlsVisiblity() {
+    private fun toggleMediaControlsVisibility() {
         if (isShowing){
             hide()
         }else{
@@ -307,20 +341,15 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     //timeout的默认值：sDefaultTime写在ijkVideoView里了
     override fun show(timeout: Long) {
         if (!isShowing){
+            if (isLock){
+                showLockDialog()
+                isShowing=true
+                return
+            }
             setProgress()
 
-            //根据横竖屏，显示不同的ui
-            // 1 竖屏     显示 toolBar 和 下controller
-            // 2 横屏     显示 上controller 和 下controller
-            //TODO 横竖屏状态下  控制Ui需要写两个 因为横屏状态的操作功能会增多
-            ll_bottom.visibility= View.VISIBLE
-            if (!isFullScreen){
-                toolBar?.visibility= View.VISIBLE
-                ll_top.visibility=GONE
-            }else{
-                toolBar?.visibility= View.GONE
-                ll_top.visibility= View.VISIBLE
-            }
+            mControlBottom?.visibility= View.VISIBLE
+            mControlTop?.visibility= View.VISIBLE
 
             isShowing=true
         }
@@ -338,15 +367,21 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         }
     }
 
+
+
     override fun hide(){
         if (isShowing){
+            if (isLock){
+                dismissLockDialog()
+                isShowing=false
+                return
+            }
             try {
                 removeCallbacks(mShowProgress)
-                ll_top.visibility= View.GONE
-                ll_bottom.visibility= View.GONE
+                mControlTop?.visibility= View.GONE
+                mControlBottom?.visibility= View.GONE
 
-                //只有在竖屏并且正在播放时隐藏actionBar，否则没有必要
-                if(isPlaying()&&!isFullScreen) toolBar?.visibility= View.GONE
+
             }catch (e: IllegalArgumentException){
                 Log.d(TAG,"alread removed")
             }
@@ -354,11 +389,12 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         }
     }
 
-    private val mFadeOut= Runnable {
+
+    protected val mFadeOut= Runnable {
         hide()
     }
 
-    private val mShowProgress=object : Runnable{
+    protected val mShowProgress=object : Runnable{
         override fun run() {
             val pos=setProgress()
             if (!mDragging && isShowing && isPlaying())
@@ -381,18 +417,18 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         }
     }
 
-    private fun setProgress(): Long {
+    protected fun setProgress(): Long {
         if (mMediaPlayer==null || mDragging)
             return 0
         if (getDuration()>0){
             //use long to avoid overflow
             val pos=1000L * getCurrentPosition() /getDuration()
-            seekBar.progress= pos.toInt()
+            mProgress?.progress= pos.toInt()
         }
-        seekBar.secondaryProgress=getBufferPercentage()
+        mProgress?.secondaryProgress=getBufferPercentage()
 
-        tv_current.text=stringForTime(getCurrentPosition())
-        tv_total.text=stringForTime(getDuration())
+        mCurrentTimeTv?.text=stringForTime(getCurrentPosition())
+        mTotalTimeTv?.text=stringForTime(getDuration())
         return getCurrentPosition()
     }
 
@@ -410,8 +446,8 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             if (uniqueDown) {
                 doPauseResume()
                 show(sDefaultTimeout)
-                if (img_pause != null) {
-                    img_pause.requestFocus()
+                if (mPlayButton!= null) {
+                    mPlayButton?.requestFocus()
                 }
             }
             return true
@@ -439,6 +475,18 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
             if (uniqueDown) {
                 hide()
             }
+            //TODO: 在back实体键增加的新逻辑
+            //横屏的时候
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                //变成竖屏
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+               postDelayed({ activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER},300)
+                if (isShowing) show()
+            }else{
+                //解决由于上面的方法导致不能结束应用
+                return false
+            }
+
             return true
         }
 
@@ -449,18 +497,18 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
     private fun doPauseResume(){
         if (isPlaying()){
             pause()
-            img_pause.setImageResource( R.drawable.bili_player_play_can_play)
+            mPlayButton?.setImageResource(R.drawable.bili_player_play_can_play)
         }else{
             start()
-            img_pause.setImageResource( R.drawable.bili_player_play_can_pause)
+            mPlayButton?.setImageResource(R.drawable.bili_player_play_can_pause)
         }
     }
 
-    private fun updatePausePlay() {
+    protected fun updatePausePlay() {
         if (isPlaying()){
-            img_pause.setImageResource( R.drawable.bili_player_play_can_pause)
+            mPlayButton?.setImageResource(R.drawable.bili_player_play_can_pause)
         }else{
-            img_pause.setImageResource(R.drawable.bili_player_play_can_play)
+            mPlayButton?.setImageResource(R.drawable.bili_player_play_can_play)
         }
     }
 
@@ -486,39 +534,32 @@ class MPlayer @JvmOverloads constructor(context: Context, attributeSet: Attribut
         }
     }
 
-    private fun hidePauseBitmap() {
-        imageView.visibility=GONE
-    }
+    //下面两个方法没写
+    fun hidePauseBitmap() {
+        if (mRenderView is TextureRenderView){
 
+        }
+    }
     fun showPauseBitmap(){
-        if (imageView.visibility==GONE)
-            imageView.visibility= View.VISIBLE
+        if (mRenderView is TextureRenderView){
 
-        //下面的方面截图只能用在本地文件上
-        /**
-         * MediaMetadataRetriever class provides a unified interface for retrieving
-         * frame and meta data from an input media file.
-         */
-//        if (imageView.visibility==GONE)
-//           imageView.visibility= View.VISIBLE
-//        val mmr = MediaMetadataRetriever()
-//        mmr.setDataSource(mUri!!.toString())
-//
-//        val bitmap = mmr.getFrameAtTime(if (getCurrentPosition()==0) -1 else getCurrentPosition().toLong())//获取第一帧图片
-//        imageView.setImageBitmap(bitmap)
-//        mmr.release()//释放资源
+        }
     }
 
-            /*           需要实现           */
-     fun showBrightnessDialog(brightnessPercent: Float){}
 
-     fun showVolumeDialog(deltaY: Float, volumePercent: Float){}
+                     /*           需要实现           */
 
-     fun showProgressDialog(deltaX: Float, newPosition: Long){}
+     abstract fun showBrightnessDialog(brightnessPercent: Float)
 
-     fun dismissBrightnessDialog(){}
+    abstract fun showVolumeDialog(deltaY: Float, volumePercent: Float)
 
-     fun dismissVolumeDialog(){}
+    abstract fun showProgressDialog(deltaX: Float, newPosition: Long)
 
-     fun dismissProgressDialog(){}
+    abstract  fun dismissBrightnessDialog()
+
+    abstract fun dismissVolumeDialog()
+
+    abstract  fun dismissProgressDialog()
+    abstract fun dismissLockDialog()
+    abstract fun showLockDialog()
 }
