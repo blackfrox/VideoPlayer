@@ -5,15 +5,36 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-   <include layout="@layout/video_media_controller"
-       android:visibility="gone"/>
-    <include layout="@layout/video_media_controller_portrait"
-        android:id="@+id/control_bottom_portrait"
-             android:background="@drawable/bg_bottom_shadow"/>
+    <include
+        layout="@layout/video_media_controller"/>
 
-    <include layout="@layout/video_overlay_progress"
-             android:layout_width="100dp"
+    <include
+        android:id="@+id/control_bottom_portrait"
+        layout="@layout/video_media_controller_portrait"
+        android:background="@drawable/bg_bottom_shadow"/>
+
+    <include
+        layout="@layout/video_dialog_progress"
+        android:layout_width="100dp"
+        android:layout_height="60dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+
+    <include layout="@layout/video_dialog_brightness"
+             android:layout_width="160dp"
+             android:layout_height="60dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+
+    <include layout="@layout/video_dialog_volume"
+             android:layout_width="160dp"
              android:layout_height="60dp"
              android:layout_centerInParent="true"
-        android:visibility="gone"/>
+             android:visibility="gone"/>
+
+    <include layout="@layout/layout_dialog_loading"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_centerInParent="true"
+             android:visibility="gone"/>
 </RelativeLayout>

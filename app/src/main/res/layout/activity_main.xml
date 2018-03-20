@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,14 +8,21 @@
     tools:context="com.blackfrox.videoplayer.MainActivity"
     android:id="@+id/rootView">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:background="?attr/colorPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="?actionBarSize"/>
+
     <com.blackfrox.player.CustomPlayer
         android:id="@+id/player"
         android:layout_width="match_parent"
         android:layout_height="240dp"/>
     <Button
+        android:layout_below="@id/player"
         android:id="@+id/startButton"
         android:text="播放"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-</LinearLayout>
+</RelativeLayout>

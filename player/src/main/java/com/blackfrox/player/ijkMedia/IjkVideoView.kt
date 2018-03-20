@@ -9,14 +9,11 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.support.v7.app.AlertDialog
-import android.text.InputFilter
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
-import android.view.SurfaceHolder
 import android.widget.FrameLayout
-import android.widget.TextView
 import com.blackfrox.player.R
 import tv.danmaku.ijk.media.player.IMediaPlayer
 import tv.danmaku.ijk.media.player.IjkMediaPlayer
@@ -27,7 +24,7 @@ import java.io.IOException
 /**
  * Created by Administrator on 2018/3/5 0005.
  */
-open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet: AttributeSet?=null, def: Int=0)
+abstract class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet: AttributeSet?=null, def: Int=0)
     : FrameLayout(context,attributeSet,def) {
     private val TAG="IjkVideoView"
     //settable by the client
@@ -35,22 +32,21 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
     private var mHeaders: Map<String,String>?=null
 
 
-        //all possible internal states
-        private val STATE_ERROR=-1
-        private val STATE_IDLE=0
-        private val STATE_PREPARING=1
-        private val STATE_PREPARED=2
-        private val STATE_PLAYING=3
-        private val STATE_PAUSED=4
-        private val STATE_PLAYBACK_COMPLETED=5
-
+    //all possible internal states
+    protected val STATE_ERROR = -1
+    protected val STATE_IDLE = 0
+    protected val STATE_PREPARING = 1
+    protected val STATE_PREPARED = 2
+    protected val STATE_PLAYING = 3
+    protected val STATE_PAUSED = 4
+    protected val STATE_PLAYBACK_COMPLETED = 5
 
     // mCurrentState is a VideoView object's current state.
     // mTargetState is the state that a method caller intends to reach.
     // For instance, regardless the VideoView object's current state,
     // calling pause() intends to bring the object to a target state
     // of STATE_PAUSED.
-    private var mCurrentState = STATE_IDLE
+    protected var mCurrentState = STATE_IDLE
     private var mTargetState = STATE_IDLE
 
     //All the stuff we need for playing and showing a video
@@ -232,7 +228,10 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
      * Sets video path
      *
      */
+    protected var isNetworkUri = false
     open fun setVideoPath(path: String){
+        if (path.startsWith("http"))
+            isNetworkUri=true
         setVideoURI(Uri.parse(path))
     }
 
@@ -356,7 +355,6 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         mCurrentState= STATE_PREPARED
 
         mOnPreparedListener?.onPrepared(it)
-        mOnPreparedListener?.onPrepared(it)
         mVideoWidth=it.videoWidth
         mVideoHeight=it.videoHeight
 
@@ -375,10 +373,9 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                     //start the video here instead of the callback.
                     if (mTargetState== STATE_PLAYING){
                         start()
-                        show()
                     }else if (!isPlaying()&&
                             (seekToPosition!=0L||getCurrentPosition()>0)){
-                       show()
+                       show(5000)
                     }
                 }
             }
@@ -389,6 +386,7 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                 start()
             }
         }
+        setStateAndUI(mCurrentState)
     }
 
     private val mCompletionListener=IMediaPlayer.OnCompletionListener{
@@ -396,16 +394,18 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         mTargetState= STATE_PLAYBACK_COMPLETED
         hide()
         mOnCompletionListener?.onCompletion(it)
+        setStateAndUI(mCurrentState)
     }
 
-    private val mInfoListener=IMediaPlayer.OnInfoListener{ iMediaPlayer: IMediaPlayer, i: Int, i1: Int ->
-        mOnInfoListener?.onInfo(iMediaPlayer,i,i1)
-        when(i){
+    private val mInfoListener=IMediaPlayer.OnInfoListener{ iMediaPlayer: IMediaPlayer, what: Int, i1: Int ->
+        mOnInfoListener?.onInfo(iMediaPlayer,what,i1)
+        when(what){
             IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED->{
                 mVideoRotationDegree=i1
                 mRenderView?.setVideoRotation(i1)
             }
         }
+        setStateAndUI(what)
         true
     }
 
@@ -445,11 +445,13 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
                     .setCancelable(false)
                     .show()
         }
+        setStateAndUI(mCurrentState)
         true
     }
 
     private val mBufferingUpdateListener=IMediaPlayer.OnBufferingUpdateListener{ mediaPlayer: IMediaPlayer, percent: Int ->
         mCurrentBufferPercentage=percent
+
     }
 
     private val mSeekCompleteListener=IMediaPlayer.OnSeekCompleteListener{
@@ -590,11 +592,12 @@ open class IjkVideoView @JvmOverloads constructor(context: Context, attributeSet
         }
         return mediaPlayer
     }
-    var sDefaultTimeout=3000L
 
     /**               需要继承的方法           **/
-    open fun  show(timeout: Long=sDefaultTimeout){}
+    abstract  fun  show(timeout: Long)
 
-    open fun hide(){ }
+    abstract  fun hide()
+
+    abstract fun setStateAndUI(currentState: Int)
 
 }

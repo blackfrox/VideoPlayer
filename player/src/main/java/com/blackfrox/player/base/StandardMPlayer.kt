@@ -15,23 +15,29 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.blackfrox.player.R
 import com.blackfrox.player.ijkMedia.TextureRenderView
+import com.blackfrox.player.util.NetInfoModule
+import tv.danmaku.ijk.media.player.IMediaPlayer
 import java.util.*
 
 
 /**
  * Created by Administrator on 2018/3/7 0007.
- * 手势处理， 控制层的显示和隐藏
+ * 1 手势处理
+ * 2 控制层的显示和隐藏
+ * 3 网络监听
+ * 4 各种UI方法抽出
  *
- * 1 竖屏显示 和横屏显示
- *
- * TODO: 需要添加: 1 网络状态监听，2 缓冲时的loadingDialog
  */
 abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attributeSet: AttributeSet?=null, def: Int=0)
     : IjkVideoView(context,attributeSet,def), View.OnTouchListener {
     private var TAG="StandardMPlayer"
 
+    constructor(context: Context,isFullScreen: Boolean): this(context){
+        this@StandardMPlayer.isFullScreen =isFullScreen
+    }
+
                          /*可供外部调用的变量值*/
-    //    var sDefaultTimeout=3000L
+    var sDefaultTimeout=5000L
     var isShowing = false
     var title: String?=null
     set(value) {
@@ -42,7 +48,7 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
                          /*可供外部调用的变量值*/
 
     //拖动ing
-    private var mDragging = false
+    protected var mDragging = false
     //    There are two scenarios that can trigger the seekbar listener to trigger :
 //
 //    The first is the user using the touchpad to adjust the position of the
@@ -109,6 +115,7 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
     protected var mBackButton: ImageView?=null
     protected var mTitleTv: TextView?=null
     protected var activity: Activity
+
     init {
 
         if (context is Activity){
@@ -168,6 +175,14 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
+    //解决第一次开始播放时UI显示不正常
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        hide()
+        mControlBottom?.visibility= View.GONE
+        mControlTop?.visibility= View.GONE
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         isFullScreen = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
         if (!isFullScreen){
@@ -183,14 +198,6 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         super.onConfigurationChanged(newConfig)
     }
 
-    constructor(context: Context,isFullScreen: Boolean): this(context){
-        this@StandardMPlayer.isFullScreen =isFullScreen
-    }
-
-
-    /**
-     * 双击和点击有冲突(已解决，使用onSingleConfirm替代onSingerTap)
-     */
     private var mFingerBehavior =-1
     private val FINGER_BEHAVIOR_PROGRESS =1
     private val FINGER_BEHAVIOR_BRIGHTNESS=2
@@ -339,6 +346,9 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
 
     //TODO：视频刚开始播放的时候， 播放图标显示不正确
     //timeout的默认值：sDefaultTime写在ijkVideoView里了
+
+    fun show()= show(sDefaultTimeout)
+
     override fun show(timeout: Long) {
         if (!isShowing){
             if (isLock){
@@ -346,11 +356,11 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
                 isShowing=true
                 return
             }
-            setProgress()
 
             mControlBottom?.visibility= View.VISIBLE
             mControlTop?.visibility= View.VISIBLE
 
+            setProgress()
             isShowing=true
         }
 
@@ -367,8 +377,6 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
-
-
     override fun hide(){
         if (isShowing){
             if (isLock){
@@ -380,8 +388,6 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
                 removeCallbacks(mShowProgress)
                 mControlTop?.visibility= View.GONE
                 mControlBottom?.visibility= View.GONE
-
-
             }catch (e: IllegalArgumentException){
                 Log.d(TAG,"alread removed")
             }
@@ -389,12 +395,11 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
-
     protected val mFadeOut= Runnable {
         hide()
     }
 
-    protected val mShowProgress=object : Runnable{
+    private val mShowProgress=object : Runnable{
         override fun run() {
             val pos=setProgress()
             if (!mDragging && isShowing && isPlaying())
@@ -402,7 +407,7 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
-    private fun stringForTime(timeMs: Long): String {
+    protected fun stringForTime(timeMs: Long): String {
         val totalSeconds =timeMs/1000
 
         val seconds = totalSeconds % 60
@@ -417,7 +422,7 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
-    protected fun setProgress(): Long {
+    private fun setProgress(): Long {
         if (mMediaPlayer==null || mDragging)
             return 0
         if (getDuration()>0){
@@ -473,14 +478,14 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
             return super.dispatchKeyEvent(event)
         } else if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU) {
             if (uniqueDown) {
-                hide()
+//                hide()
             }
             //TODO: 在back实体键增加的新逻辑
             //横屏的时候
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 //变成竖屏
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-               postDelayed({ activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER},300)
+               postDelayed({ activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER},1000)
                 if (isShowing) show()
             }else{
                 //解决由于上面的方法导致不能结束应用
@@ -504,11 +509,51 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
-    protected fun updatePausePlay() {
+    private fun updatePausePlay() {
         if (isPlaying()){
             mPlayButton?.setImageResource(R.drawable.bili_player_play_can_pause)
         }else{
             mPlayButton?.setImageResource(R.drawable.bili_player_play_can_play)
+        }
+    }
+
+    /**
+     *这个方法在***中调用了
+     * 1 onInfoListener
+     * 2 onPreparedListener
+     * 3 onErrorListener
+     * 4 onCompletionListener
+     *
+     * @param currentState  mediaPlayer当前状态/onInfoListener中的what信息
+     */
+    override fun setStateAndUI(currentState: Int) {
+        when (currentState) {
+            STATE_PREPARED -> {
+               if (isNetworkUri){
+                   createNetWorkState()
+                   listenerNetWorkState()
+               }
+            }
+            STATE_PLAYBACK_COMPLETED -> {
+                if (isNetworkUri)
+                    releaseNetWorkState()
+            }
+            STATE_ERROR -> {
+                if (isNetworkUri&&mNetChanged) {
+                    showNetWorkErrorDialog()
+                    mNetChanged = false
+                }
+            }
+            //以下两个是在onInfoListener中调用的
+            IMediaPlayer.MEDIA_INFO_BUFFERING_START->{
+                //避免在onPrepared之前就进入了buffering，导致一直loading
+                if (mCurrentState!=STATE_PREPARING&&mCurrentState>0){
+                    showLoadingDialog()
+                }
+            }
+            IMediaPlayer.MEDIA_INFO_BUFFERING_END ->{
+                dismissLoadingDialog()
+            }
         }
     }
 
@@ -534,6 +579,49 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
         }
     }
 
+                             /**网络状态**/
+    protected var mNetChanged = false
+    protected var mNetInfoModule: NetInfoModule?=null
+    protected var mNetState =  "NORMAL"
+    /**
+     * 创建网络监听
+     */
+    protected fun createNetWorkState(){
+        if (mNetInfoModule==null){
+            mNetInfoModule= NetInfoModule(context.applicationContext,{
+                if (!mNetState.equals(it))
+                    mNetChanged=true
+
+                mNetState=it
+            })
+            mNetState = mNetInfoModule?.getCurrentConnectionType()!!
+        }
+    }
+
+    /**
+     * 监听网络状态
+     */
+    protected fun listenerNetWorkState()=
+        mNetInfoModule?.onHostResume()
+
+
+    /**
+     * 取消网络监听
+     */
+    protected fun unListenerNetWorkState()=
+            mNetInfoModule?.onHostPause()
+
+    /**
+     * 释放网络监听
+     */
+    protected fun releaseNetWorkState(){
+        if (mNetInfoModule!=null){
+            mNetInfoModule!!.onHostPause()
+            mNetInfoModule=null
+        }
+    }
+                             /**网络状态**/
+
     //下面两个方法没写
     fun hidePauseBitmap() {
         if (mRenderView is TextureRenderView){
@@ -547,7 +635,7 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
     }
 
 
-                     /*           需要实现           */
+                     /*           《UI》可自由选择是否实现具体内容           */
 
      abstract fun showBrightnessDialog(brightnessPercent: Float)
 
@@ -560,6 +648,14 @@ abstract class StandardMPlayer @JvmOverloads constructor(context: Context, attri
     abstract fun dismissVolumeDialog()
 
     abstract  fun dismissProgressDialog()
+
     abstract fun dismissLockDialog()
+
     abstract fun showLockDialog()
+
+    abstract fun showNetWorkErrorDialog()
+
+    abstract fun dismissLoadingDialog()
+
+    abstract  fun showLoadingDialog()
 }

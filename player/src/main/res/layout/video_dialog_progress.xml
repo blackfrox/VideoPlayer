@@ -5,7 +5,8 @@
               android:layout_height="60dp"
     android:background="@android:color/black"
     android:gravity="center"
-    android:layout_gravity="center">
+    android:layout_gravity="center"
+    android:id="@+id/layout_progress">
 
     <LinearLayout
         android:id="@+id/ll"
