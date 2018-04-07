@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
 //        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         with(player){
             toolBar =toolbar
-           setVideoPath(url)
+           setVideoPath(path)
             title="测试"
         }
 
